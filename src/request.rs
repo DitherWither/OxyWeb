@@ -1,5 +1,5 @@
 use std::{
-    io::{self, BufRead, BufReader, Error, Read},
+    io::{self, BufRead, BufReader, Read},
     net::TcpStream,
     str,
 };
