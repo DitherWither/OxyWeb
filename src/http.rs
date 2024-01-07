@@ -46,7 +46,7 @@ where
         let response = if let Ok(req) = req {
             self.application.handle_request(req)
         } else {
-            serve_file("bad_request.html", StatusCode::BadRequest)
+            serve_file("res/bad_request.html", StatusCode::BadRequest)
         };
         stream.write_all(response.to_string().as_bytes()).unwrap();
     }
