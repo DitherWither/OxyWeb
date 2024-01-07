@@ -1,15 +1,12 @@
 use std::{
-    fs,
     io::{BufReader, Write},
     net::{TcpListener, TcpStream},
-    thread,
-    time::Duration,
 };
 
 use crate::{
     config::Config,
-    request::{Method, Request},
-    response::{self, Response},
+    request::Request,
+    response::Response,
     thread_pool::ThreadPool,
 };
 
