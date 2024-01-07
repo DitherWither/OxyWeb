@@ -60,7 +60,7 @@ impl Request {
                     break;
                 }
                 let mut body_bytes: Vec<u8> = Vec::with_capacity(length);
-                for i in 0..length  {
+                for _ in 0..length  {
                     body_bytes.push(0);
                 }
                 reader.read_exact(body_bytes.as_mut_slice())?;
