@@ -3,12 +3,7 @@ use std::{
     net::{TcpListener, TcpStream},
 };
 
-use crate::{
-    config::Config,
-    request::Request,
-    response::Response,
-    thread_pool::ThreadPool,
-};
+use crate::{prelude::*, thread_pool::ThreadPool, config::Config};
 
 pub struct HttpServer<T>
 where
@@ -48,10 +43,12 @@ where
         let buf_reader = BufReader::new(&mut stream);
 
         let req = Request::parse(buf_reader);
-        if let Ok(req) = req {
-            let response = self.application.handle_request(req);
-            stream.write_all(response.to_string().as_bytes()).unwrap();
-        }
+        let response = if let Ok(req) = req {
+            self.application.handle_request(req)
+        } else {
+            serve_file("bad_request.html", StatusCode::BadRequest)
+        };
+        stream.write_all(response.to_string().as_bytes()).unwrap();
     }
 }
 
