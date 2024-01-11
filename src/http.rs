@@ -40,15 +40,13 @@ where
     }
 
     fn handle_connection(&self, mut stream: TcpStream) {
-        let buf_reader = BufReader::new(&mut stream);
-
-        let req = Request::parse(buf_reader);
-        let response = if let Ok(req) = req {
-            self.application.handle_request(req)
+        if let Ok(req) = Request::parse(BufReader::new(&mut stream)) {
+            let response = self.application.handle_request(req);
+            stream.write_all(response.to_string().as_bytes()).unwrap();
         } else {
-            serve_file("res/bad_request.html", StatusCode::BadRequest)
-        };
-        stream.write_all(response.to_string().as_bytes()).unwrap();
+            let response = serve_file("res/bad_request.html", StatusCode::BadRequest);
+            stream.write_all(response.to_string().as_bytes()).unwrap();
+        }
     }
 }
 
@@ -68,8 +66,5 @@ where
 {
     let config = Config::load();
     let server = HttpServer::new(&config, application);
-    let boxed = Box::new(server);
-    let b = Box::leak(boxed);
-
-    b.run();
+    server.run();
 }
