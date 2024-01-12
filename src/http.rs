@@ -29,10 +29,10 @@ where
         }
     }
 
-    pub fn run(&'static self) {
+    pub fn run(self) {
         for stream in self.listener.incoming() {
             if let Ok(stream) = stream {
-                self.pool.execute(|| {
+                self.pool.execute(move || {
                     self.handle_connection(stream);
                 });
             }
@@ -52,12 +52,6 @@ where
 
 pub trait HttpApplication: Send + Sync {
     fn handle_request(&self, req: Request) -> Response;
-
-    fn run(&self)
-    where
-        Self: HttpApplication,
-    {
-    }
 }
 
 pub fn run<T>(application: T)
