@@ -1,3 +1,5 @@
+//! A example hello world application
+
 use crate::prelude::*;
 
 pub struct Application;
