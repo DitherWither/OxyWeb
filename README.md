@@ -2,6 +2,8 @@
 
 Web server in rust with zero dependencies/crates
 
+TODO: Add a empty application that serves static files
+
 It uses TCP/IP directly
 
 ## Building
@@ -11,6 +13,8 @@ To build a podman image, run
 scripts/build.sh
 ```
 and it should generate an image called `oxidized-webserver:latest`.
+
+The image currently serves a hello world application
 
 It should also work with docker
 

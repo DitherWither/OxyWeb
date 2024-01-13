@@ -2,7 +2,7 @@ FROM rust:alpine as builder
 
 WORKDIR /usr/src/oxidized-webserver
 COPY . .
-RUN RUSTFLAGS='-C target-feature=+crt-static' cargo install --path .
+RUN RUSTFLAGS='-C target-feature=+crt-static' cargo install --example hello_world --path .
 
 FROM scratch
 
