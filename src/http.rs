@@ -2,6 +2,7 @@
 use std::{
     io::{BufReader, Write},
     net::{TcpListener, TcpStream},
+    sync::Arc,
 };
 
 use crate::{config::Config, prelude::*, thread_pool::ThreadPool};
@@ -9,16 +10,16 @@ use crate::{config::Config, prelude::*, thread_pool::ThreadPool};
 /// A Multi-Threaded http server
 pub struct HttpServer<T>
 where
-    T: HttpApplication,
+    T: HttpApplication + 'static,
 {
     listener: TcpListener,
     pool: ThreadPool,
-    application: T,
+    application: Arc<T>,
 }
 
 impl<T> HttpServer<T>
 where
-    T: HttpApplication,
+    T: HttpApplication + 'static,
 {
     /// Create a new instance of the HTTP server, and bind the port provided by the config
     pub fn new(config: &Config, application: T) -> Self {
@@ -28,32 +29,31 @@ where
         Self {
             listener,
             pool,
-            application,
+            application: Arc::new(application),
         }
     }
 
     /// Run the event loop for the server
-    pub fn run(&'static self) {
+    pub fn run(self) {
         for stream in self.listener.incoming() {
             if let Ok(stream) = stream {
-                self.pool.execute(|| {
-                    self.handle_connection(stream);
+                let app_clone = Arc::clone(&self.application);
+                self.pool.execute(move || {
+                    HttpServer::handle_connection(&app_clone, stream);
                 });
             }
         }
     }
 
     /// Handle a single http request
-    fn handle_connection(&self, mut stream: TcpStream) {
-        let buf_reader = BufReader::new(&mut stream);
-
-        let req = Request::parse(buf_reader);
-        let response = if let Ok(req) = req {
-            self.application.handle_request(req)
+    fn handle_connection(app: &Arc<T>, mut stream: TcpStream) {
+        if let Ok(req) = Request::parse(BufReader::new(&mut stream)) {
+            let response = app.handle_request(req);
+            stream.write_all(response.to_string().as_bytes()).unwrap();
         } else {
-            serve_file("res/bad_request.html", StatusCode::BadRequest)
-        };
-        stream.write_all(response.to_string().as_bytes()).unwrap();
+            let response = serve_file("res/bad_request.html", StatusCode::BadRequest);
+            stream.write_all(response.to_string().as_bytes()).unwrap();
+        }
     }
 }
 
@@ -70,8 +70,5 @@ where
 {
     let config = Config::load();
     let server = HttpServer::new(&config, application);
-    let boxed = Box::new(server);
-    let b = Box::leak(boxed);
-
-    b.run();
+    server.run();
 }
