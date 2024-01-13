@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "oxidized-webserver"
+name = "oxyweb"
 version = "0.1.0"
