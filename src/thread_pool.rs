@@ -1,3 +1,5 @@
+//! Module containing thread pool implementation
+
 use std::{
     sync::{
         mpsc::{self, Receiver},
@@ -6,21 +8,25 @@ use std::{
     thread::{self, JoinHandle},
 };
 
+/// A thread pool to distribute jobs across multiple threads
 pub struct ThreadPool {
     workers: Vec<Worker>,
     sender: Option<mpsc::Sender<Job>>,
 }
 
 impl ThreadPool {
-    pub fn new(size: usize) -> Self {
-        assert!(size > 0);
+    /// Create a new thread pool with specified amount of threads
+    ///
+    /// Panics if the number of threads is 0
+    pub fn new(threads: usize) -> Self {
+        assert!(threads > 0);
 
-        let mut workers = Vec::with_capacity(size);
+        let mut workers = Vec::with_capacity(threads);
 
         let (sender, receiver) = mpsc::channel();
         let receiver = Arc::new(Mutex::new(receiver));
 
-        for i in 0..size {
+        for i in 0..threads {
             workers.push(Worker::new(i, Arc::clone(&receiver)))
         }
 
@@ -30,6 +36,7 @@ impl ThreadPool {
         }
     }
 
+    /// Execute a task on the thread
     pub fn execute<F>(&self, f: F)
     where
         F: FnOnce(),
@@ -57,6 +64,7 @@ impl Drop for ThreadPool {
 
 type Job = Box<dyn FnOnce() + Send + 'static>;
 
+/// A worker that handles a thread, used internally by thread pool
 struct Worker {
     id: usize,
     thread: Option<JoinHandle<()>>,

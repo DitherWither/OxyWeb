@@ -1,13 +1,13 @@
+mod application;
 mod config;
+mod http;
+mod prelude;
 mod request;
 mod response;
 mod thread_pool;
-mod http;
-mod application;
-mod prelude;
 mod utility;
 
-use crate::{http::run, application::Application};
+use crate::{application::Application, http::run};
 
 fn main() {
     run(Application);
