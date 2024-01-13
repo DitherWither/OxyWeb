@@ -1,6 +1,6 @@
 //! A example hello world application
 
-use oxidized_webserver::*;
+use oxyweb::*;
 
 pub struct Application;
 
@@ -15,5 +15,5 @@ impl HttpApplication for Application {
 }
 
 fn main() {
-    oxidized_webserver::http::run(Application);
+    oxyweb::http::run(Application);
 }

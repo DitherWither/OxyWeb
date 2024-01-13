@@ -1,4 +1,4 @@
-# oxidized-webserver
+# OxyWeb
 
 Web server in rust with zero dependencies/crates
 
@@ -12,7 +12,7 @@ To build a podman image, run
 ```bash
 scripts/build.sh
 ```
-and it should generate an image called `oxidized-webserver:latest`.
+and it should generate an image called `oxyweb:latest`.
 
 The image currently serves a hello world application
 
