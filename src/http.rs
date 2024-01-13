@@ -1,22 +1,23 @@
 use std::{
     io::{BufReader, Write},
     net::{TcpListener, TcpStream},
+    sync::Arc,
 };
 
 use crate::{prelude::*, thread_pool::ThreadPool, config::Config};
 
 pub struct HttpServer<T>
 where
-    T: HttpApplication,
+    T: HttpApplication + 'static,
 {
     listener: TcpListener,
     pool: ThreadPool,
-    application: T,
+    application: Arc<T>,
 }
 
 impl<T> HttpServer<T>
 where
-    T: HttpApplication,
+    T: HttpApplication + 'static,
 {
     pub fn new(config: &Config, application: T) -> Self {
         let listener = TcpListener::bind(format!("0.0.0.0:{}", config.port)).unwrap();
@@ -25,23 +26,24 @@ where
         Self {
             listener,
             pool,
-            application,
+            application: Arc::new(application),
         }
     }
 
     pub fn run(self) {
         for stream in self.listener.incoming() {
             if let Ok(stream) = stream {
+                let app_clone = Arc::clone(&self.application);
                 self.pool.execute(move || {
-                    self.handle_connection(stream);
+                    self.handle_connection(stream, app_clone);
                 });
             }
         }
     }
 
-    fn handle_connection(&self, mut stream: TcpStream) {
+    fn handle_connection(&self, mut stream: TcpStream, app: Arc<T>) {
         if let Ok(req) = Request::parse(BufReader::new(&mut stream)) {
-            let response = self.application.handle_request(req);
+            let response = app.handle_request(req);
             stream.write_all(response.to_string().as_bytes()).unwrap();
         } else {
             let response = serve_file("res/bad_request.html", StatusCode::BadRequest);
