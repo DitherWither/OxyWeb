@@ -1,6 +1,8 @@
-# oxidized-webserver
+# OxyWeb
 
 Web server in rust with zero dependencies/crates
+
+TODO: Add a empty application that serves static files
 
 It uses TCP/IP directly
 
@@ -10,7 +12,9 @@ To build a podman image, run
 ```bash
 scripts/build.sh
 ```
-and it should generate an image called `oxidized-webserver:latest`.
+and it should generate an image called `oxyweb:latest`.
+
+The image currently serves a hello world application
 
 It should also work with docker
 
