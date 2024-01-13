@@ -35,13 +35,13 @@ where
             if let Ok(stream) = stream {
                 let app_clone = Arc::clone(&self.application);
                 self.pool.execute(move || {
-                    self.handle_connection(stream, app_clone);
+                    HttpServer::handle_connection(&app_clone, stream);
                 });
             }
         }
     }
 
-    fn handle_connection(&self, mut stream: TcpStream, app: Arc<T>) {
+    fn handle_connection(app: &Arc<T>, mut stream: TcpStream) {
         if let Ok(req) = Request::parse(BufReader::new(&mut stream)) {
             let response = app.handle_request(req);
             stream.write_all(response.to_string().as_bytes()).unwrap();
