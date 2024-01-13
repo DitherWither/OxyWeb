@@ -1,5 +1,8 @@
+//! HTTP response and related code
 use std::fmt;
 
+
+/// HTTP status codes as defined in RFC 2616
 #[derive(Debug, PartialEq, PartialOrd, Clone, Copy)]
 #[allow(dead_code)]
 pub enum StatusCode {
@@ -42,11 +45,11 @@ pub enum StatusCode {
     BadGateway,
     ServiceUnavailable,
     GatewayTimeout,
-    HttpVersionNotSupported
+    HttpVersionNotSupported,
 }
 
 impl StatusCode {
-    /// internal convenience func used in display trait implementation
+    /// Internal convenience func used in display trait, use .to_string() instead
     fn get_text(&self) -> &str {
         use StatusCode::*;
         match self {
@@ -75,7 +78,7 @@ impl StatusCode {
             NotAcceptable => "406 Not Acceptable",
             ProxyAuthenticationRequired => "407 Proxy Authentication Required",
             RequestTimeout => "408 Request Time-out",
-            Conflict =>  "409 Conflict",
+            Conflict => "409 Conflict",
             Gone => "410 Gone",
             LengthRequired => "411 Length Required",
             PreconditionFailed => "412 Precondition Failed",
@@ -89,7 +92,7 @@ impl StatusCode {
             BadGateway => "502 Bad Gateway",
             ServiceUnavailable => "503 Service Unavailable",
             GatewayTimeout => "504 Gateway Time-out",
-            HttpVersionNotSupported => "505 HTTP Version not supported"
+            HttpVersionNotSupported => "505 HTTP Version not supported",
         }
     }
 }
@@ -100,11 +103,12 @@ impl fmt::Display for StatusCode {
     }
 }
 
+/// HTTP Response struct
 #[derive(Clone, Debug)]
 pub struct Response {
     pub status: StatusCode,
     pub body: String,
-    pub headers: Vec<String>
+    pub headers: Vec<String>,
 }
 
 impl fmt::Display for Response {
@@ -129,7 +133,7 @@ impl Default for Response {
         Self {
             status: StatusCode::Ok,
             body: String::new(),
-            headers: Vec::new()
+            headers: Vec::new(),
         }
     }
 }

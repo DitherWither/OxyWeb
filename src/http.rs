@@ -1,11 +1,13 @@
+//! Contains core HTTP logic that handles requests and responses
 use std::{
     io::{BufReader, Write},
     net::{TcpListener, TcpStream},
     sync::Arc,
 };
 
-use crate::{prelude::*, thread_pool::ThreadPool, config::Config};
+use crate::{config::Config, prelude::*, thread_pool::ThreadPool};
 
+/// A Multi-Threaded http server
 pub struct HttpServer<T>
 where
     T: HttpApplication + 'static,
@@ -19,6 +21,7 @@ impl<T> HttpServer<T>
 where
     T: HttpApplication + 'static,
 {
+    /// Create a new instance of the HTTP server, and bind the port provided by the config
     pub fn new(config: &Config, application: T) -> Self {
         let listener = TcpListener::bind(format!("0.0.0.0:{}", config.port)).unwrap();
         let pool = ThreadPool::new(8);
@@ -30,6 +33,7 @@ where
         }
     }
 
+    /// Run the event loop for the server
     pub fn run(self) {
         for stream in self.listener.incoming() {
             if let Ok(stream) = stream {
@@ -41,6 +45,7 @@ where
         }
     }
 
+    /// Handle a single http request
     fn handle_connection(app: &Arc<T>, mut stream: TcpStream) {
         if let Ok(req) = Request::parse(BufReader::new(&mut stream)) {
             let response = app.handle_request(req);
@@ -52,10 +57,13 @@ where
     }
 }
 
+/// A trait for applications using the http server
 pub trait HttpApplication: Send + Sync {
+    /// Request handler, called for every request
     fn handle_request(&self, req: Request) -> Response;
 }
 
+/// Start an application up, creating the server and loading the config
 pub fn run<T>(application: T)
 where
     T: HttpApplication + 'static,
