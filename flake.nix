@@ -1,5 +1,5 @@
 {
-  description = "Oxidized webserver";
+  description = "OxyWeb";
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
   };
