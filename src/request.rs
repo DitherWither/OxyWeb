@@ -1,9 +1,14 @@
+//! HTTP Requests and related code
+
 use std::{
     io::{self, BufRead, BufReader, Read},
     net::TcpStream,
     str,
 };
 
+/// HTTP Method, as defined under RFC 2616
+///
+/// Is `Unknown` when the server was unable to parse the method
 #[derive(Debug, PartialEq, PartialOrd, Clone, Copy)]
 pub enum Method {
     Options,
@@ -34,6 +39,7 @@ impl From<&str> for Method {
     }
 }
 
+/// A HTTP request
 #[derive(Clone, Debug)]
 pub struct Request {
     pub method: Method,
@@ -44,6 +50,9 @@ pub struct Request {
 }
 
 impl Request {
+    /// Parse a http request from a tcp stream
+    ///
+    /// TODO: Document the internals of this function
     pub fn parse(mut reader: BufReader<&mut TcpStream>) -> io::Result<Self> {
         let mut status_line = String::new();
         reader.read_line(&mut status_line)?;
@@ -60,7 +69,7 @@ impl Request {
                     break;
                 }
                 let mut body_bytes: Vec<u8> = Vec::with_capacity(length);
-                for _ in 0..length  {
+                for _ in 0..length {
                     body_bytes.push(0);
                 }
                 reader.read_exact(body_bytes.as_mut_slice())?;
