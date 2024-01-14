@@ -1,7 +1,6 @@
 //! HTTP response and related code
 use std::fmt;
 
-
 /// HTTP status codes as defined in RFC 2616
 #[derive(Debug, PartialEq, PartialOrd, Clone, Copy)]
 #[allow(dead_code)]
@@ -116,7 +115,7 @@ impl fmt::Display for Response {
         write!(
             f,
             "HTTP/1.1 {status}\r\nContent-Length: {length}\r\n",
-            status = self.status.to_string(),
+            status = self.status,
             length = self.body.len(),
         )?;
 
