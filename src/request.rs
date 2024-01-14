@@ -68,10 +68,7 @@ impl Request {
                 if length > 4096 {
                     break;
                 }
-                let mut body_bytes: Vec<u8> = Vec::with_capacity(length);
-                for _ in 0..length {
-                    body_bytes.push(0);
-                }
+                let mut body_bytes: Vec<u8> = vec![0; length];
                 reader.read_exact(body_bytes.as_mut_slice())?;
                 body = str::from_utf8(&body_bytes)
                     .or(Err(io::Error::new(
@@ -96,7 +93,7 @@ impl Request {
                 }
                 line = line.replace("\r\n", "");
                 headers.push(line.clone());
-                let line_split: Vec<_> = line.split(":").collect();
+                let line_split: Vec<_> = line.split(':').collect();
 
                 if line_split[0] == "Content-Length" {
                     let l = line_split[1].trim().parse::<usize>();
