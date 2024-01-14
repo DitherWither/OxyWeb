@@ -5,11 +5,11 @@ use oxyweb::*;
 pub struct Application;
 
 impl HttpApplication for Application {
-    fn handle_request(&self, req: Request) -> Response {
-        use Method::*;
-        match (req.method, req.path.as_str()) {
-            (Get, "/") => utility::serve_file("res/index.html", StatusCode::Ok),
-            (_, _) => utility::serve_file("res/404.html", StatusCode::NotFound),
+    fn handle_request(&self, req: Request) -> Option<Response> {
+        if req.path == "/hello" && req.method == Method::Get {
+            Some(Response { status: StatusCode::Ok, body: "Hello, World".to_owned(), ..Default::default() })
+        } else {
+            None
         }
     }
 }

@@ -1,0 +1,9 @@
+services:
+  server:
+    image: oxyweb:latest
+    volumes:
+      - type: bind
+        source: ./res
+        target: /res
+    ports:
+      - 8080:8080

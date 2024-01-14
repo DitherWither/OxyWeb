@@ -2,10 +2,14 @@
 use std::{
     io::{BufReader, Write},
     net::{TcpListener, TcpStream},
+    path::PathBuf,
     sync::Arc,
 };
 
-use crate::{config::Config, Request, Response, StatusCode, utility::serve_file, thread_pool::ThreadPool};
+use crate::{
+    config::Config, thread_pool::ThreadPool, utility::serve_file, Method, Request, Response,
+    StatusCode,
+};
 
 /// A Multi-Threaded http server
 pub struct HttpServer<T>
@@ -35,32 +39,56 @@ where
 
     /// Run the event loop for the server
     pub fn run(self) {
-        for stream in self.listener.incoming() {
-            if let Ok(stream) = stream {
-                let app_clone = Arc::clone(&self.application);
-                self.pool.execute(move || {
-                    HttpServer::handle_connection(&app_clone, stream);
-                });
-            }
+        for stream in self.listener.incoming().flatten() {
+            let app_clone = Arc::clone(&self.application);
+            self.pool.execute(move || {
+                HttpServer::handle_connection(&app_clone, stream);
+            });
         }
     }
 
     /// Handle a single http request
     fn handle_connection(app: &Arc<T>, mut stream: TcpStream) {
         if let Ok(req) = Request::parse(BufReader::new(&mut stream)) {
-            let response = app.handle_request(req);
+            let response = match app.handle_request(req.clone()) {
+                Some(response) => response,
+                None => serve_static_file(req),
+            };
             stream.write_all(response.to_string().as_bytes()).unwrap();
         } else {
-            let response = serve_file("res/bad_request.html", StatusCode::BadRequest);
+            let response = show_400();
             stream.write_all(response.to_string().as_bytes()).unwrap();
         }
     }
 }
 
+fn serve_static_file(request: Request) -> Response {
+    if request.method != Method::Get {
+        return serve_file("res/404.html", StatusCode::NotFound);
+    }
+    let mut path = format!(
+        "res/{}",
+        request.path.strip_prefix('/').unwrap_or(&request.path)
+    );
+
+    if path.ends_with('/') {
+        path += "index.html";
+    }
+
+    path = path.replace("../", "");
+
+    if PathBuf::from(path.clone()).exists() {
+        serve_file(&path, StatusCode::Ok)
+    } else {
+        show_404()
+    }
+}
 /// A trait for applications using the http server
 pub trait HttpApplication: Send + Sync {
     /// Request handler, called for every request
-    fn handle_request(&self, req: Request) -> Response;
+    ///
+    /// If the return value is None, a static file will be served instead
+    fn handle_request(&self, req: Request) -> Option<Response>;
 }
 
 /// Start an application up, creating the server and loading the config
@@ -71,4 +99,28 @@ where
     let config = Config::load();
     let server = HttpServer::new(&config, application);
     server.run();
+}
+
+fn show_404() -> Response {
+    if PathBuf::from("res/errors/404.html").exists() {
+        serve_file("res/errors/404.html", StatusCode::NotFound)
+    } else {
+        Response {
+            body: include_str!("../res/errors/404.html").to_owned(),
+            status: StatusCode::NotFound,
+            ..Default::default()
+        }
+    }
+}
+
+fn show_400() -> Response {
+    if PathBuf::from("res/errors/400.html").exists() {
+        serve_file("res/errors/400.html", StatusCode::NotFound)
+    } else {
+        Response {
+            body: include_str!("../res/errors/400.html").to_owned(),
+            status: StatusCode::NotFound,
+            ..Default::default()
+        }
+    }
 }
