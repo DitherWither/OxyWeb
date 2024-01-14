@@ -1,12 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bad Request</title>
+    <style>
+        html,
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            min-height: 100vh;
+            background-color: #f3faf9;
+            color: #0a1815;
+        }
+
+        body div {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+        }
+
+        h1 {
+            color: #934BB4;
+            font-size: 6rem;
+            margin: 0;
+        }
+
+        p {
+            font-size: 1.25rem;
+        }
+    </style>
 </head>
+
 <body>
-    <h1>400: Bad Request</h1>
-    <small>oxyweb alpha</small>
+    <div>
+        <header>
+            <h1>400: Bad Request</h1>
+            <p>Your HTTP request was invalid</p>
+        </header>
+    </div>
 </body>
+
 </html>
