@@ -1,3 +1,3 @@
 #!/bin/sh
 
-podman build --tag oxyweb:latest .
+docker build --tag oxyweb:latest .
