@@ -2,10 +2,10 @@
 use std::{
     io::{BufReader, Write},
     net::{TcpListener, TcpStream},
-    sync::Arc,
+    sync::Arc, path::PathBuf,
 };
 
-use crate::{config::Config, Request, Response, StatusCode, utility::serve_file, thread_pool::ThreadPool};
+use crate::{config::Config, Request, Response, StatusCode, utility::serve_file, thread_pool::ThreadPool, response, Method};
 
 /// A Multi-Threaded http server
 pub struct HttpServer<T>
@@ -48,19 +48,43 @@ where
     /// Handle a single http request
     fn handle_connection(app: &Arc<T>, mut stream: TcpStream) {
         if let Ok(req) = Request::parse(BufReader::new(&mut stream)) {
-            let response = app.handle_request(req);
+            let response = match app.handle_request(req.clone()) {
+                Some(response) => response,
+                None => serve_static_file(req)
+            };
             stream.write_all(response.to_string().as_bytes()).unwrap();
         } else {
             let response = serve_file("res/bad_request.html", StatusCode::BadRequest);
             stream.write_all(response.to_string().as_bytes()).unwrap();
         }
     }
+
 }
 
+fn serve_static_file(request: Request) -> Response {
+    if request.method != Method::Get {
+        return serve_file("res/404.html", StatusCode::NotFound);
+    }
+    let mut path = format!("res/{}", request.path.strip_prefix("/").unwrap_or(&request.path));
+
+    if path.ends_with("/") {
+        path = path + "index.html";
+    }
+
+    path = path.replace("../", "");
+
+    if PathBuf::from(path.clone()).exists() {
+        serve_file(&path, StatusCode::Ok)
+    } else {
+        serve_file("res/404.html", StatusCode::NotFound)
+    }
+}
 /// A trait for applications using the http server
 pub trait HttpApplication: Send + Sync {
     /// Request handler, called for every request
-    fn handle_request(&self, req: Request) -> Response;
+    /// 
+    /// If the return value is None, a static file will be served instead
+    fn handle_request(&self, req: Request) -> Option<Response>;
 }
 
 /// Start an application up, creating the server and loading the config
