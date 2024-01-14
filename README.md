@@ -6,13 +6,11 @@ It uses TCP/IP directly
 
 ## Building
 
-To build a podman image, run
+To build a docker image, run
 ```bash
 scripts/build.sh
 ```
 and it should generate an image called `oxyweb:latest`.
-
-It should also work with docker
 
 ## Build/Run locally
 
