@@ -2,10 +2,14 @@
 use std::{
     io::{BufReader, Write},
     net::{TcpListener, TcpStream},
-    sync::Arc, path::PathBuf,
+    path::PathBuf,
+    sync::Arc,
 };
 
-use crate::{config::Config, Request, Response, StatusCode, utility::serve_file, thread_pool::ThreadPool, response, Method};
+use crate::{
+    config::Config, thread_pool::ThreadPool, utility::serve_file, Method, Request, Response,
+    StatusCode,
+};
 
 /// A Multi-Threaded http server
 pub struct HttpServer<T>
@@ -35,13 +39,11 @@ where
 
     /// Run the event loop for the server
     pub fn run(self) {
-        for stream in self.listener.incoming() {
-            if let Ok(stream) = stream {
-                let app_clone = Arc::clone(&self.application);
-                self.pool.execute(move || {
-                    HttpServer::handle_connection(&app_clone, stream);
-                });
-            }
+        for stream in self.listener.incoming().flatten() {
+            let app_clone = Arc::clone(&self.application);
+            self.pool.execute(move || {
+                HttpServer::handle_connection(&app_clone, stream);
+            });
         }
     }
 
@@ -50,7 +52,7 @@ where
         if let Ok(req) = Request::parse(BufReader::new(&mut stream)) {
             let response = match app.handle_request(req.clone()) {
                 Some(response) => response,
-                None => serve_static_file(req)
+                None => serve_static_file(req),
             };
             stream.write_all(response.to_string().as_bytes()).unwrap();
         } else {
@@ -58,17 +60,19 @@ where
             stream.write_all(response.to_string().as_bytes()).unwrap();
         }
     }
-
 }
 
 fn serve_static_file(request: Request) -> Response {
     if request.method != Method::Get {
         return serve_file("res/404.html", StatusCode::NotFound);
     }
-    let mut path = format!("res/{}", request.path.strip_prefix("/").unwrap_or(&request.path));
+    let mut path = format!(
+        "res/{}",
+        request.path.strip_prefix('/').unwrap_or(&request.path)
+    );
 
-    if path.ends_with("/") {
-        path = path + "index.html";
+    if path.ends_with('/') {
+        path += "index.html";
     }
 
     path = path.replace("../", "");
@@ -82,7 +86,7 @@ fn serve_static_file(request: Request) -> Response {
 /// A trait for applications using the http server
 pub trait HttpApplication: Send + Sync {
     /// Request handler, called for every request
-    /// 
+    ///
     /// If the return value is None, a static file will be served instead
     fn handle_request(&self, req: Request) -> Option<Response>;
 }
