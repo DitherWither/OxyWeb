@@ -56,7 +56,7 @@ where
             };
             stream.write_all(response.to_string().as_bytes()).unwrap();
         } else {
-            let response = serve_file("res/bad_request.html", StatusCode::BadRequest);
+            let response = show_400();
             stream.write_all(response.to_string().as_bytes()).unwrap();
         }
     }
@@ -80,7 +80,7 @@ fn serve_static_file(request: Request) -> Response {
     if PathBuf::from(path.clone()).exists() {
         serve_file(&path, StatusCode::Ok)
     } else {
-        serve_file("res/404.html", StatusCode::NotFound)
+        show_404()
     }
 }
 /// A trait for applications using the http server
@@ -99,4 +99,28 @@ where
     let config = Config::load();
     let server = HttpServer::new(&config, application);
     server.run();
+}
+
+fn show_404() -> Response {
+    if PathBuf::from("res/errors/404.html").exists() {
+        serve_file("res/errors/404.html", StatusCode::NotFound)
+    } else {
+        Response {
+            body: include_str!("../res/errors/404.html").to_owned(),
+            status: StatusCode::NotFound,
+            ..Default::default()
+        }
+    }
+}
+
+fn show_400() -> Response {
+    if PathBuf::from("res/errors/400.html").exists() {
+        serve_file("res/errors/400.html", StatusCode::NotFound)
+    } else {
+        Response {
+            body: include_str!("../res/errors/400.html").to_owned(),
+            status: StatusCode::NotFound,
+            ..Default::default()
+        }
+    }
 }
